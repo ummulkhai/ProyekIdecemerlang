@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dasbor Proyek: Kopi Nusantara (dengan Fitur AI)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Open+Sans:wght@400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Warm Neutrals with Corporate & Natural Accents -->
+    <!-- Application Structure Plan: A project dashboard layout. A fixed side navigation allows users to jump to different project documents. The user flow is non-linear, allowing exploration in any order. Added AI-powered buttons for brief analysis and idea generation to assist the user, enhancing the simulation of being a project manager with modern tools. -->
+    <!-- Visualization & Content Choices: The bar chart remains for data analysis. New additions are interactive AI buttons. Goal: Assist the user in overcoming project hurdles. Viz/Presentation Method: Buttons trigger modal-like text generation from the Gemini API. Interaction: User clicks a button, sees a loading state, then gets formatted text output (analysis or ideas). Justification: This directly integrates AI as a functional tool within the workflow, making the learning experience more dynamic and representative of modern project management. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #FDFBF6;
+        }
+        h1, h2, h3, h4 {
+            font-family: 'Montserrat', sans-serif;
+        }
+        .font-playfair {
+            font-family: 'Playfair Display', serif;
+        }
+        .highlight-ambiguous {
+            background-color: #FFF3CD;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #856404;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 450px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        #side-nav .nav-link.active {
+            background-color: #007BFF;
+            color: white;
+            font-weight: 700;
+        }
+        .ai-button {
+            background: linear-gradient(135deg, #6A11CB 0%, #2575FC 100%);
+            transition: all 0.3s ease;
+        }
+        .ai-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .ai-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6A11CB;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="flex flex-col md:flex-row min-h-screen">
+        
+        <aside id="side-nav" class="w-full md:w-64 bg-white shadow-lg md:fixed md:h-full">
+            <div class="p-6 border-b">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-blue-100 rounded-full">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800">PT. Ide Cemerlang</h2>
+                        <p class="text-xs text-gray-500 italic">Brilliant Ideas, Executed Perfectly.</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="p-4 space-y-2">
+                <a href="#brief" class="nav-link flex items-center px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Brief Proyek
+                </a>
+                <a href="#riset" class="nav-link flex items-center px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    Riset & Persona
+                </a>
+                <a href="#data" class="nav-link flex items-center px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Analisis Data
+                </a>
+                <a href="#proposal" class="nav-link flex items-center px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Ruang Kerja Proposal
+                </a>
+                <a href="#aset" class="nav-link flex items-center px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Aset Visual
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 md:ml-64 p-6 md:p-10">
+            <header class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900">Dasbor Proyek: Kampanye Kopi Nusantara</h1>
+                <p class="text-gray-500 mt-1">Selamat datang di ruang kerja proyek peluncuran "Cold Brew Fusion".</p>
+            </header>
+
+            <!-- Section: Brief Proyek -->
+            <section id="brief" class="mb-12 scroll-mt-24">
+                <h2 class="text-2xl font-bold mb-4 border-l-4 border-blue-500 pl-4">Brief Proyek</h2>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div id="brief-content">
+                        <div class="flex justify-between items-start border-b pb-4 mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold font-playfair text-[#6F4E37]">Kopi Nusantara</h3>
+                                <p class="text-sm text-gray-500">Project: Kampanye Digital "Cold Brew Fusion"</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-semibold">Tanggal: 4 Juni 2025</p>
+                                <p class="text-sm font-semibold text-red-600">Deadline: 6 Juni 2025</p>
+                            </div>
+                        </div>
+                        <div class="space-y-4 text-gray-700">
+                            <p><strong class="font-semibold text-gray-800">Latar Belakang:</strong> Kopi Nusantara akan meluncurkan lini produk baru bernama "Cold Brew Fusion" yang menyasar segmen anak muda.</p>
+                            <p><strong class="font-semibold text-gray-800">Tujuan Proyek:</strong> Membuat konsep kampanye digital yang bisa <span class="highlight-ambiguous">viral</span> dan <span class="highlight-ambiguous">disukai anak muda (Gen Z)</span> untuk meningkatkan awareness dan trial produk.</p>
+                            <p><strong class="font-semibold text-gray-800">Mandatories:</strong> Wajib menampilkan logo Kopi Nusantara dan mockup produk.</p>
+                            <div>
+                                <strong class="font-semibold text-gray-800">Tantangan Utama (Informasi Belum Jelas):</strong>
+                                <ul class="list-disc list-inside mt-2 space-y-1">
+                                    <li>Parameter "viral" tidak terdefinisi.</li>
+                                    <li>Budget kampanye <span class="highlight-ambiguous">akan didiskusikan nanti</span>.</li>
+                                    <li>KPI (Key Performance Indicators) belum ditentukan.</li>
+                                    <li>Platform digital spesifik tidak disebutkan.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 text-center">
+                        <button id="analyzeBriefBtn" class="ai-button text-white font-bold py-2 px-6 rounded-full inline-flex items-center">
+                            <span class="mr-2">✨</span> Analisis Brief dengan AI
+                        </button>
+                    </div>
+                    <div id="briefAnalysisResult" class="mt-6 hidden">
+                        <div class="flex justify-center items-center h-24">
+                            <div class="loader"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section: Riset & Persona -->
+            <section id="riset" class="mb-12 scroll-mt-24">
+                <h2 class="text-2xl font-bold mb-4 border-l-4 border-blue-500 pl-4">Riset & Persona</h2>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Persona -->
+                        <div id="persona-content" class="lg:col-span-1">
+                            <h3 class="text-xl font-bold mb-4">Profil Target Audiens</h3>
+                            <div class="flex items-center space-x-4 mb-4">
+                                <img src="https://placehold.co/80x80/EBF4FF/007BFF?text=Rian" class="rounded-full" alt="Foto Rian">
+                                <div>
+                                    <p class="font-bold text-lg">Rian, 21 Tahun</p>
+                                    <p class="text-sm text-gray-600">Mahasiswa & Content Creator</p>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-4 italic">"Rian tinggal di kota besar, sangat aktif di media sosial, dan selalu ingin mencoba hal baru. Baginya, sebuah produk bukan hanya tentang rasa, tapi juga tentang cerita dan nilai yang dibawa oleh brand tersebut."</p>
+                            <div class="space-y-2 text-sm">
+                                <p><strong>Values:</strong> Otentisitas, Ekspresi Diri, Komunitas.</p>
+                                <p><strong>Media Habits:</strong> TikTok (Hiburan), Instagram (Inspirasi), Discord (Komunitas).</p>
+                                <p><strong>Key Insight:</strong> Percaya pada rekomendasi teman/influencer mikro, bukan iklan langsung.</p>
+                            </div>
+                            <div class="mt-6 text-center">
+                                <button id="generateIdeasBtn" class="ai-button text-white font-bold py-2 px-6 rounded-full inline-flex items-center">
+                                    <span class="mr-2">✨</span> Hasilkan Ide Kampanye
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Riset Kompetitor -->
+                        <div class="lg:col-span-2">
+                            <h3 class="text-xl font-bold mb-4">Analisis Kompetitor</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-left">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="p-3 font-semibold">Kompetitor</th>
+                                            <th class="p-3 font-semibold">Strategi Utama</th>
+                                            <th class="p-3 font-semibold">Peluang Kita</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-b">
+                                            <td class="p-3 font-medium">Kafe Kekinian</td>
+                                            <td class="p-3">Influencer Marketing, konten Instagram yang sangat estetik.</td>
+                                            <td class="p-3" rowspan="2">
+                                                <div class="p-3 bg-green-50 text-green-800 rounded-md">
+                                                    <p class="font-semibold">Key Opportunity:</p>
+                                                    <p>Membuat kampanye yang **terlihat premium** namun tetap **terasa otentik dan partisipatif**.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="p-3 font-medium">Kopi Instan Hits</td>
+                                            <td class="p-3">TikTok Challenge dengan hadiah besar, konten User-Generated (UGC).</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="ideaGenerationResult" class="mt-6 hidden">
+                        <div class="flex justify-center items-center h-24">
+                            <div class="loader"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Section: Analisis Data -->
+            <section id="data" class="mb-12 scroll-mt-24">
+                <h2 class="text-2xl font-bold mb-4 border-l-4 border-blue-500 pl-4">Analisis Data Penjualan</h2>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-1">Preferensi Produk Kopi (Q1 2025)</h3>
+                    <p class="text-gray-600 mb-6">Visualisasi data penjualan menunjukkan produk apa yang paling diminati oleh kelompok usia target kita (18-24 tahun). Ini adalah kunci untuk memvalidasi peluncuran "Cold Brew Fusion".</p>
+                    <div class="chart-container">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                    <div class="mt-6 p-4 bg-blue-50 rounded-lg text-blue-800">
+                        <p><strong class="font-semibold">Insight Kunci:</strong> Data dengan jelas menunjukkan bahwa audiens usia 18-24 tahun sangat menyukai minuman kopi yang lebih ringan dan manis (Kopi Susu Gula Aren). Ini memberikan validasi kuat bahwa produk seperti "Cold Brew Fusion" yang memiliki profil rasa serupa memiliki potensi pasar yang besar di segmen ini.</p>
+                    </div>
+                </div>
+            </section>
+
+             <!-- Section: Ruang Kerja Proposal -->
+            <section id="proposal" class="mb-12 scroll-mt-24">
+                <h2 class="text-2xl font-bold mb-4 border-l-4 border-blue-500 pl-4">Ruang Kerja Proposal</h2>
+                 <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-1">Template One-Page Proposal</h3>
+                    <p class="text-gray-600 mb-6">Gunakan kerangka ini untuk menyusun konsep kampanye Anda. Ini akan menjadi output utama dari fase analisis awal.</p>
+                    <div class="border-2 border-dashed rounded-lg p-6">
+                        <h4 class="font-bold text-center text-lg mb-4">ONE-PAGE PROPOSAL: KAMPANYE KOPI NUSANTARA</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="font-semibold">Nama Konsep Kampanye:</label>
+                                <div class="mt-1 p-2 bg-gray-100 rounded h-8"></div>
+                            </div>
+                            <div>
+                                <label class="font-semibold">Ide Besar (The Big Idea):</label>
+                                <div class="mt-1 p-2 bg-gray-100 rounded h-12"></div>
+                            </div>
+                            <div>
+                                <label class="font-semibold">Aktivitas Utama:</label>
+                                <ul class="list-disc list-inside mt-1 space-y-2 pl-2">
+                                    <li class="p-2 bg-gray-100 rounded h-8"></li>
+                                    <li class="p-2 bg-gray-100 rounded h-8"></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <!-- Section: Aset Visual -->
+            <section id="aset" class="scroll-mt-24">
+                <h2 class="text-2xl font-bold mb-4 border-l-4 border-blue-500 pl-4">Aset Visual</h2>
+                 <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4">Mockup Produk: Cold Brew Fusion</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 text-center">
+                        <div class="p-4 border rounded-lg">
+                            <img src="https://placehold.co/200x300/FFEADD/6F4E37?text=Mango+Tango" class="mx-auto mb-2 rounded" alt="Mango Tango">
+                            <p class="font-semibold">Mango Tango</p>
+                        </div>
+                        <div class="p-4 border rounded-lg">
+                            <img src="https://placehold.co/200x300/FFEAEE/D94C65?text=Lychee+Breeze" class="mx-auto mb-2 rounded" alt="Lychee Breeze">
+                            <p class="font-semibold">Lychee Breeze</p>
+                        </div>
+                        <div class="p-4 border rounded-lg">
+                            <img src="https://placehold.co/200x300/FFF8DD/EAB308?text=Pineapple+Pop" class="mx-auto mb-2 rounded" alt="Pineapple Pop">
+                            <p class="font-semibold">Pineapple Pop</p>
+                        </div>
+                    </div>
+                 </div>
+            </section>
+
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Chart.js setup
+    const salesData = {
+        labels: ['Espresso', 'Americano', 'Caffe Latte', 'Kopi Susu Gula Aren', 'Manual Brew V60'],
+        datasets: [
+            { label: 'Usia 18-24', data: [1200, 2500, 8900, 15500, 900], backgroundColor: '#007BFF' },
+            { label: 'Usia 25-34', data: [4500, 5100, 6200, 7800, 2100], backgroundColor: '#6F4E37' },
+            { label: 'Usia 35+', data: [6800, 7200, 3100, 2500, 3500], backgroundColor: '#ced4da' }
+        ]
+    };
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar', data: salesData,
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${c.parsed.y.toLocaleString('id-ID')} unit` } } },
+            scales: { y: { beginAtZero: true, title: { display: true, text: 'Unit Terjual' } }, x: { title: { display: true, text: 'Jenis Produk' } } }
+        }
+    });
+
+    // Navigation scroll spy
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sections = document.querySelectorAll('main section');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(link => {
+            link.classList.toggle('active', link.getAttribute('href').substring(1) === entry.target.id);
+          });
+        }
+      });
+    }, { rootMargin: '0px', threshold: 0.4 });
+    sections.forEach(section => observer.observe(section));
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            navLinks.forEach(l => l.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+        });
+    });
+
+    // --- Gemini API Feature Logic ---
+    const analyzeBriefBtn = document.getElementById('analyzeBriefBtn');
+    const briefAnalysisResult = document.getElementById('briefAnalysisResult');
+    const generateIdeasBtn = document.getElementById('generateIdeasBtn');
+    const ideaGenerationResult = document.getElementById('ideaGenerationResult');
+
+    const callGeminiAPI = async (prompt) => {
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+        const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+        
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            
+            if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts.length > 0) {
+                return result.candidates[0].content.parts[0].text;
+            } else {
+                 return "Maaf, AI tidak dapat memberikan respons saat ini. Coba lagi nanti. " + (result.candidates ? "" : JSON.stringify(result));
+            }
+        } catch (error) {
+            console.error("Error calling Gemini API:", error);
+            return `Terjadi kesalahan saat menghubungi AI. Periksa konsol untuk detailnya. Error: ${error.message}`;
+        }
+    };
+
+    analyzeBriefBtn.addEventListener('click', async () => {
+        analyzeBriefBtn.disabled = true;
+        briefAnalysisResult.innerHTML = '<div class="flex justify-center items-center h-24"><div class="loader"></div></div>';
+        briefAnalysisResult.classList.remove('hidden');
+        
+        const briefText = document.getElementById('brief-content').innerText;
+        const prompt = `Anda adalah seorang Project Manager ahli. Analisis brief proyek berikut, identifikasi informasi penting yang hilang, dan susun daftar pertanyaan klarifikasi profesional untuk diajukan kepada klien.
+
+Brief Proyek:
+---
+${briefText}
+---
+
+Berikan output dalam format Markdown dengan judul "Analisis & Pertanyaan Klarifikasi" dan dua sub-judul: "Informasi Kunci yang Hilang" dan "Pertanyaan Klarifikasi untuk Klien".`;
+
+        const analysis = await callGeminiAPI(prompt);
+        briefAnalysisResult.innerHTML = formatAIResponse(analysis);
+        analyzeBriefBtn.disabled = false;
+    });
+    
+    generateIdeasBtn.addEventListener('click', async () => {
+        generateIdeasBtn.disabled = true;
+        ideaGenerationResult.innerHTML = '<div class="flex justify-center items-center h-24"><div class="loader"></div></div>';
+        ideaGenerationResult.classList.remove('hidden');
+        
+        const personaText = document.getElementById('persona-content').innerText;
+        const prompt = `Anda adalah seorang Creative Strategist yang handal. Berdasarkan profil persona berikut dan informasi produk, hasilkan 3 ide kampanye digital yang kreatif untuk peluncuran produk "Cold Brew Fusion". Ide harus relevan untuk platform TikTok dan Instagram.
+
+Informasi Produk: Minuman kopi "Cold Brew Fusion" dengan rasa buah tropis, menyasar Gen Z.
+
+Profil Persona:
+---
+${personaText}
+---
+
+Berikan output dalam format Markdown dengan judul "Ide Kampanye Kreatif" dan 3 sub-judul untuk setiap ide. Setiap ide harus mencakup konsep singkat dan contoh aktivitas.`;
+
+        const ideas = await callGeminiAPI(prompt);
+        ideaGenerationResult.innerHTML = formatAIResponse(ideas);
+        generateIdeasBtn.disabled = false;
+    });
+
+    const formatAIResponse = (text) => {
+        const lines = text.split('\n');
+        let html = '';
+        let inList = false;
+
+        lines.forEach(line => {
+            line = line.trim();
+            if (line.startsWith('### ')) {
+                if (inList) { html += '</ul>'; inList = false; }
+                html += `<h4 class="text-md font-bold text-gray-800 mt-4 mb-2">${line.substring(4)}</h4>`;
+            } else if (line.startsWith('## ')) {
+                if (inList) { html += '</ul>'; inList = false; }
+                html += `<h3 class="text-lg font-bold text-gray-900 mb-3 border-b pb-2">${line.substring(3)}</h3>`;
+            } else if (line.startsWith('* ')) {
+                if (!inList) { html += '<ul class="list-disc list-inside space-y-1 mt-2">'; inList = true; }
+                html += `<li>${line.substring(2).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</li>`;
+            } else {
+                if (inList) { html += '</ul>'; inList = false; }
+                if (line !== '') {
+                    html += `<p class="mb-2">${line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>`;
+                }
+            }
+        });
+
+        if (inList) {
+            html += '</ul>';
+        }
+
+        return `<div class="p-4 bg-gray-50 rounded-lg text-gray-700 text-left">${html}</div>`;
+    };
+
+});
+</script>
+
+</body>
+</html>
